@@ -145,6 +145,7 @@ def run_ecmwf_rapid_process(rapid_executable_location, #path to RAPID executable
                             geoserver_password="", #password for geoserver
                             mp_mode='htcondor', #valid options are htcondor and multiprocess,
                             mp_execute_directory="",#required if using multiprocess mode
+			    region="",#1 of the 12 partitioned ECMWF files. Leave empty if using global
                             ):
     """
     This it the main ECMWF RAPID process
@@ -190,10 +191,11 @@ def run_ecmwf_rapid_process(rapid_executable_location, #path to RAPID executable
 
         #get list of correclty formatted rapid input directories in rapid directory
         rapid_input_directories = get_valid_watershed_list(os.path.join(rapid_io_files_location, "input"))
-        
+       
+
         if download_ecmwf and ftp_host:
             #get list of folders to download
-            ecmwf_folders = sorted(get_ftp_forecast_list('Runoff.%s*.netcdf.tar*' % date_string,
+            ecmwf_folders = sorted(get_ftp_forecast_list('Runoff.%s*%s*.netcdf.tar*' % (date_string, region),
                                                          ftp_host,
                                                          ftp_login,
                                                          ftp_passwd,
@@ -202,6 +204,9 @@ def run_ecmwf_rapid_process(rapid_executable_location, #path to RAPID executable
             #get list of folders to run
             ecmwf_folders = sorted(glob(os.path.join(ecmwf_forecast_location,
                                                      'Runoff.'+date_string+'*.netcdf')))
+	
+	print '\nAll files that match the region chosen:'
+	print ecmwf_folders
 
         #LOAD LOCK INFO FILE
         last_forecast_date = datetime.datetime.utcfromtimestamp(0)
@@ -229,7 +234,10 @@ def run_ecmwf_rapid_process(rapid_executable_location, #path to RAPID executable
                         run_ecmwf_folders.append(ecmwf_folder)
                         
                 ecmwf_folders = run_ecmwf_folders
-                
+               
+	print '\nAll files to be downloaded (after last forecast run date):'
+	print ecmwf_folders
+ 
         if not ecmwf_folders:
             print("No new forecasts found to run. Exiting ...")
             return
@@ -287,8 +295,10 @@ def run_ecmwf_rapid_process(rapid_executable_location, #path to RAPID executable
                                                             ftp_passwd, ftp_directory,
                                                             delete_past_ecmwf_forecasts)
 
+		    print '\nFollowing file successfully downloaded and extracted: ' + ecmwf_folder + '\n'
+
                 #get list of forecast files
-                ecmwf_forecasts = glob(os.path.join(ecmwf_folder,'*.runoff.nc'))
+                ecmwf_forecasts = glob(os.path.join(ecmwf_folder,'*.runoff.%s*nc' % region))
                                   
                 #look for old version of forecasts
                 if not ecmwf_forecasts:
@@ -415,8 +425,12 @@ def run_ecmwf_rapid_process(rapid_executable_location, #path to RAPID executable
                                                                             watershed_job_info['jobs'], 
                                                                             chunksize=1)
                         if data_manager:
-                            for multi_job_index in multiprocess_worker_list:
-                                #upload file when done
+
+                            for multi_job_index in multiprocess_worker_list:				
+
+				print multi_job_index
+
+				#upload file when done
                                 upload_single_forecast(watershed_job_info['jobs_info'][multi_job_index], data_manager)
                                 
                         #just in case ...

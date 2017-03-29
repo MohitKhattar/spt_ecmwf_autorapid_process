@@ -85,34 +85,12 @@ class CreateInflowFileFromECMWFRunoff(object):
             return None
             
     def getGridName(self, in_nc, high_res=False):
-        """Return name of grid"""
-        #INDENTIFY LAT/LON DIMENSIONS
-        data_nc = NET.Dataset(in_nc)
-        dim_list = data_nc.dimensions.keys()
-
-        latitude_dim = "lat"
-        if 'latitude' in dim_list:
-            latitude_dim = 'latitude'
-        
-        longitude_dim = "lon"
-        if 'longitude' in dim_list:
-            longitude_dim = 'longitude'
-
-        lat_dim_size = len(data_nc.dimensions[latitude_dim])
-        lon_dim_size = len(data_nc.dimensions[longitude_dim])
-        data_nc.close()
-        
+	# michael added temp
+	print "The GridName function is working", "**************************"
+	"""Return name of grid"""
         if high_res:
-            if lat_dim_size == 2560 and lon_dim_size == 5120:
-                return 'ecmwf_t1279'
-            else:
-                return 'high_res'
-        else:
-            if lat_dim_size == 1280 and lon_dim_size == 2560:
-                return 'ecmwf_tco639'
-            else:
-                return 'low_res'
-
+            return 'ecmwf_t1279'
+        return 'ecmwf_tco639'
 
     def execute(self, in_nc, in_weight_table, out_nc, grid_name, in_time_interval="6hr"):
         """The source code of the tool."""
@@ -120,7 +98,11 @@ class CreateInflowFileFromECMWFRunoff(object):
         # Validate the netcdf dataset
         vars_oi_index = self.dataValidation(in_nc)
         
-        #get conversion factor
+	# michael added temp
+	print "passed data validation", "*********************"
+        print in_weight_table
+
+	#get conversion factor
         conversion_factor = 1.0
         if grid_name == 'ecmwf_t1279' or grid_name == 'ecmwf_tco639':
             #new grids in mm instead of m
